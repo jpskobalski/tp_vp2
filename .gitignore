@@ -13,15 +13,30 @@ __pycache__/
 *.swp
 .DS_Store
 
-# Artefactos generados por el notebook
-work/                 # dataset_yolo, ocr_cache, runs/
-*.pt                  # checkpoints sueltos fuera de work/runs
+# -----------------------------------------------------------------------------
+# work/ : ignoramos solo lo PESADO o derivable. Los CSV de resultados,
+# training_history, plots PNG, configs YAML, etc. SÍ se versionan para que
+# Mac y Lenovo puedan sincronizar resultados por git.
+# -----------------------------------------------------------------------------
 
-# Modelos pre-entrenados descargados por Ultralytics en CWD
+# Pesos de modelo (grandes, regenerables entrenando)
+*.pt
+*.pth
+*.pkl
+*.onnx
+*.torchscript
+
+# Modelos pre-entrenados descargados por Ultralytics en CWD del notebook
 yolov8*.pt
 yolov11*.pt
+yolo11*.pt
+
+# Dataset YOLO materializado (regenerable a partir de pseudo-labels)
+work/dataset_yolo/
+
+# Caché de OCR (grande-ish; rsync directo Mac↔Lenovo si querés reusarlo)
+work/ocr_cache/
 
 # Logs
 *.log
 wandb/
-runs/
