@@ -1,0 +1,2 @@
+model_name,n_images,mean_ms,p50_ms,p95_ms,device,easyocr_gpu
+baseline_ocr_regex,3000,91.52150670687358,42.467594146728516,306.63026571273747,cuda:0,True

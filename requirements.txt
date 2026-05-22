@@ -1,0 +1,52 @@
+# =============================================================================
+# Requirements — TP final Visión por Computadora 2 (CEIA)
+# =============================================================================
+#
+# ATENCIÓN — torch debe instalarse PRIMERO con el build correcto para tu hardware:
+#
+#   - Linux + NVIDIA (Lenovo P1 / RTX 4070, CUDA 12.1):
+#       pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+#   - Mac (Apple Silicon / Intel):
+#       pip install torch torchvision
+#     (el build de PyPI ya incluye soporte MPS en M-series)
+#
+#   - CPU only:
+#       pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#
+# Si NO instalás torch primero, pip puede resolverlo al CPU build por defecto.
+# Después de torch, instalar el resto:
+#   pip install -r requirements.txt
+# =============================================================================
+
+# Deep learning core (NOTE: instalar antes via comando de arriba)
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Detección de objetos (YOLOv8 / YOLOv11)
+ultralytics>=8.3.0
+
+# OCR (segunda etapa del pipeline + generación de pseudo-labels)
+easyocr>=1.7.1
+pytesseract>=0.3.10           # solo para TP_VC2_LD (clasificador + CAM + OCR)
+
+# Visión / procesamiento de imágenes
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# Manejo de datos
+pandas>=2.0.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0
+pyyaml>=6.0
+
+# Visualización
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Notebooks + utilidades
+jupyter>=1.0.0
+ipykernel>=6.25.0
+ipywidgets>=8.0.0
+tqdm>=4.65.0
+nbformat>=5.9.0
