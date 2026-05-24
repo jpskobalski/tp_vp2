@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP Final VC II — Detección de datos de contacto en e-commerce</title>
+
+  <!-- ============================================================
+       DEPENDENCIAS EXTERNAS (CDN) — NO requiere instalación local
+       ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ============================================================
+       RESET + VARIABLES
+       ============================================================ */
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff;
+      --bg-soft: #f7f8fa;
+      --text: #1a1a1a;
+      --text-soft: #555;
+      --text-muted: #888;
+      --primary: #0b5fff;
+      --primary-soft: #e8f0ff;
+      --accent: #e6a800;
+      --accent-soft: #fff7d6;
+      --success: #16a34a;
+      --success-soft: #dcfce7;
+      --danger: #dc2626;
+      --border: #e5e7eb;
+      --shadow: 0 6px 24px rgba(0,0,0,0.06);
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.92em; }
+
+    /* ============================================================
+       LAYOUT DEL DECK
+       ============================================================ */
+    .presentation {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 4vh 6vw 7rem;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      pointer-events: none;
+      overflow-y: auto;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    .slide.prev { transform: translateX(-40px); }
+
+    /* ============================================================
+       NAV + PROGRESS
+       ============================================================ */
+    .nav {
+      position: fixed;
+      bottom: 1.4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      z-index: 100;
+    }
+    .nav button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      color: var(--text);
+      transition: background 0.2s;
+    }
+    .nav button:hover { background: var(--primary-soft); }
+    .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-counter {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      color: var(--text-soft);
+      min-width: 60px;
+      text-align: center;
+    }
+    .progress {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: transparent;
+      z-index: 100;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* ============================================================
+       TIPOGRAFÍA Y BLOQUES BASE
+       ============================================================ */
+    h1 { font-size: clamp(2rem, 4.5vw, 3.6rem); line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+    h3 { font-size: clamp(1.1rem, 1.6vw, 1.4rem); font-weight: 600; margin-bottom: 0.4rem; }
+    p  { font-size: clamp(0.95rem, 1.2vw, 1.1rem); color: var(--text-soft); }
+    .eyebrow {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .eyebrow.accent { color: var(--accent); background: var(--accent-soft); }
+
+    /* ============================================================
+       PLACEHOLDERS DE IMAGEN
+       Mostrados cuando no hay <img>; reemplazar con <img src="...">
+       ============================================================ */
+    .img-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: repeating-linear-gradient(
+        45deg, #f0f2f5, #f0f2f5 10px, #e8ebf0 10px, #e8ebf0 20px
+      );
+      border: 2px dashed #c4cad3;
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 1rem;
+      aspect-ratio: 4/3;
+      min-height: 140px;
+    }
+    .img-frame {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+    }
+    .img-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .img-frame.contain {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+    }
+    .img-frame.contain img { object-fit: contain; }
+    .caption {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      text-align: center;
+    }
+
+    /* ============================================================
+       GRIDS Y LAYOUTS
+       ============================================================ */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+      flex: 1;
+    }
+    .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .four-col  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+    .io-pair {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    .io-pair .arrow {
+      font-size: 2rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .stack > * + * { margin-top: 1rem; }
+    .stack-sm > * + * { margin-top: 0.5rem; }
+
+    /* ============================================================
+       CARDS / BLOQUES INFO
+       ============================================================ */
+    .card {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+    }
+    .card.accent { background: var(--accent-soft); border-color: #f0d27a; }
+    .card.primary { background: var(--primary-soft); border-color: #c2d6ff; }
+    .card.success { background: var(--success-soft); border-color: #86efac; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.8rem;
+    }
+    .stat {
+      padding: 0.9rem 1rem;
+      background: var(--bg-soft);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.2rem;
+    }
+
+    /* ============================================================
+       TABLA COMPARATIVA
+       ============================================================ */
+    table.compare {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    table.compare th,
+    table.compare td {
+      padding: 0.8rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    table.compare th {
+      background: var(--bg-soft);
+      font-weight: 600;
+      color: var(--text);
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+    }
+    table.compare td:first-child,
+    table.compare th:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+    table.compare tr.winner {
+      background: var(--success-soft);
+      font-weight: 600;
+    }
+    table.compare tr.winner td:first-child::before {
+      content: "★ ";
+      color: var(--success);
+    }
+    table.compare td.metric { font-variant-numeric: tabular-nums; }
+
+    /* ============================================================
+       PILL / TAGS
+       ============================================================ */
+    .tag {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+    }
+    .tag.primary { background: var(--primary-soft); color: var(--primary); border-color: transparent; }
+    .tag.accent  { background: var(--accent-soft); color: #8a6500; border-color: transparent; }
+
+    /* ============================================================
+       LISTA "PASOS"
+       ============================================================ */
+    ol.steps { list-style: none; counter-reset: step; }
+    ol.steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 0.6rem 0 0.6rem 2.6rem;
+    }
+    ol.steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0; top: 0.55rem;
+      width: 1.8rem; height: 1.8rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* ============================================================
+       SLIDE 1 — TITLE
+       ============================================================ */
+    .slide-title { justify-content: center; align-items: center; text-align: center; }
+    .slide-title h1 { margin-bottom: 1rem; }
+    .slide-title .subtitle {
+      font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+      color: var(--text-soft);
+      max-width: 80ch;
+      margin: 0 auto 2.5rem;
+    }
+    .slide-title .team {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem 2.5rem;
+      justify-content: center;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .slide-title .institution {
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* ============================================================
+       SLIDE: CHART
+       ============================================================ */
+    .chart-wrap {
+      flex: 1;
+      min-height: 280px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+    }
+
+    /* Scrollbar nice */
+    .slide::-webkit-scrollbar { width: 8px; }
+    .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- Barra de progreso superior -->
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+<main class="presentation" id="deck">
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 1 — TÍTULO + EQUIPO
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide slide-title active">
+
+    <div class="institution">
+      Visión por Computadora II · Carrera de Especialización en Inteligencia Artificial · FIUBA
+    </div>
+
+    <h1>Técnicas de Visión Artificial para la Mitigación de<br>la Desintermediación en E-commerce</h1>
+    <p>________________________________________________________________________________________________________________________________________</p>
+    <h2>INTEGRANTES</h2>
+    <div class="team">
+      <ul>
+      <div>Ronald Uthurralt</div>
+      <div>Luis Diaz Charris</div>
+      <div>Juan Pablo Skobalski</div>
+      </ul>
+    </div>
+
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 2 — PROBLEMA + DATASET
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>El problema y el dataset</h2>
+
+    <div class="two-col" style="margin-top: 1.5rem;">
+      <!-- Columna izquierda: descripción del problema -->
+      <div class="stack">
+        <h3>¿Por qué es relevante?</h3>
+        <p>Las plataformas de e-commerce (MercadoLibre, eBay, etc.) prohíben que los vendedores incluyan datos de contacto en sus publicaciones para evitar que se salten la plataforma. Sin embargo, muchos vendedores <strong>esquivan el filtro de texto</strong> embebiendo teléfonos, emails o handles de WhatsApp directamente <strong>dentro de la imagen</strong>.</p>
+
+        <h3 style="margin-top:1rem;">¿Qué queremos resolver?</h3>
+        <p>Construir un sistema automático que, dada una imagen de publicación, detecte si contienen datos de contacto.</p>
+
+        <div class="card accent" style="margin-top: 1rem;">
+          <strong>Ejemplo del problema</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">Imagen con teléfono y WhatsApp incrustados sobre el producto, ilegibles para los filtros de texto plano.</span>
+        </div>
+      </div>
+
+      <!-- Columna derecha: grid representativo del dataset -->
+      <div>
+        <div class="img-frame contain" style="aspect-ratio: 16/9;">
+          <img src="assets/presentation/dataset_samples_grid.jpg" alt="Muestras representativas del dataset: positivas y negativas">
+        </div>
+        <div class="caption">Fig. 1 — Muestras representativas del dataset: publicaciones de e-commerce con y sin datos de contacto incrustados.</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 2rem;">Dataset utilizado</h3>
+    <div class="stat-grid" style="margin-top: 0.6rem;">
+      <div class="stat"><div class="stat-value">10.000</div><div class="stat-label">Imágenes train</div></div>
+      <div class="stat"><div class="stat-value">~30%</div><div class="stat-label">Positivos en train (enriquecido)</div></div>
+      <div class="stat"><div class="stat-value">3.000</div><div class="stat-label">Imágenes test</div></div>
+      <div class="stat"><div class="stat-value">~3%</div><div class="stat-label">Positivos en test (distrib. natural)</div></div>
+      <div class="stat"><div class="stat-value">Binarios</div><div class="stat-label">Labels (sin bounding boxes)</div></div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 3 — SOLUCIÓN 1: YOLO (DETECTOR)
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Pipeline YOLO + OCR — Detección entrenada</h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <div class="stack">
+        <h3>Por qué lo probamos</h3>
+        <p>Para <strong>localizar Y clasificar</strong> regiones de texto sospechoso en una sola pasada. Hipótesis: si el detector acota la región, podemos correr OCR únicamente sobre las cajas detectadas (10–100× menos área que OCR full-image), bajando latencia sin perder cobertura. A diferencia de los otros modelos, YOLO es un <strong>pipeline multi-etapa</strong>, no un solo forward.</p>
+
+        <h3>Características</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
+          <li>4 clases: <span class="tag">phone</span> <span class="tag">email</span> <span class="tag">social</span> <span class="tag">keyword</span></li>
+          <li>Input: imagen 640×640 normalizada</li>
+          <li>Output: lista de bboxes + clase + confidence</li>
+          <li>Entrenado con <strong>weak supervision</strong> — sin bboxes manuales</li>
+          <li><span class="tag primary">Variantes probadas</span> YOLOv8n · YOLOv8s</li>
+        </ul>
+
+        <h3>Pipeline (5 etapas)</h3>
+        <ol class="steps">
+          <li><strong>Pseudo-labels</strong>: EasyOCR sobre positivos + regex (phone/email/social/keyword) → bboxes con clase</li>
+          <li><strong>Formato YOLO</strong>: conversión a (cx, cy, w, h) normalizadas + split train/val 85/15 + <code>data.yaml</code></li>
+          <li><strong>Entrenamiento</strong>: YOLOv8 desde pesos COCO, 50 epochs, batch 16, imgsz 640</li>
+          <li><strong>Inferencia</strong>: detector → bboxes con clase y confidence</li>
+          <li><strong>Post-proceso</strong>: crop por bbox + EasyOCR sobre el crop + regex valida el texto extraído</li>
+        </ol>
+      </div>
+
+      <div>
+        <h3>Input → Output</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
+          <img src="assets/presentation/yolo_example.jpg" alt="YOLO sobre test_001049.jpg: v8s acierta, v8n se la pierde">
+        </div>
+        <div class="caption">Mismo input para los 4 modelos (<code>test_001049.jpg</code>): YOLOv8s la detecta, YOLOv8n se la pierde.</div>
+
+        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">0.131</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.333</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.188</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">0.143</div><div class="stat-label">AUC-PR</div></div>
+        </div>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Valores image-level YOLOv8s sobre test (3.000 imágenes, 93 positivos). mAP@0.5 en validación interna: 0.530.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 4 — SOLUCIÓN 2: EFFICIENTNET (CLASIF. BINARIA)
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>EfficientNet-B0 — Clasificador binario</h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <div class="stack">
+        <h3>Por qué lo probamos</h3>
+        <p>Porque <strong>se alinea directamente con los labels que tenemos</strong> (imagen-level 0/1), sin necesidad de generar pseudo-anotaciones. Es la baseline supervisada más simple y la que mejor explota lo que el dataset realmente ofrece. Si funciona bien, no necesitamos sumar complejidad.</p>
+
+        <h3>Características</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
+          <li>Backbone EfficientNet-B0 pre-entrenado en ImageNet</li>
+          <li>Input: imagen 384×384 normalizada con stats ImageNet</li>
+          <li>Output: probabilidad escalar p(contacto) ∈ [0, 1]</li>
+          <li>Loss: <code>BCEWithLogitsLoss</code> con <code>pos_weight</code> suavizado (√(neg/pos)) para el desbalance</li>
+          <li>Threshold de decisión calibrado en validación interna</li>
+        </ul>
+
+        <h3>Pipeline (4 etapas)</h3>
+        <ol class="steps">
+          <li><strong>Preprocesamiento</strong>: resize 384×384 + normalización ImageNet + augmentations (flip, rotation, color jitter)</li>
+          <li><strong>Forward</strong>: backbone EfficientNet-B0 extrae features de la imagen completa</li>
+          <li><strong>Cabeza binaria</strong>: <code>Linear(in_features, 1)</code> → logit → sigmoid → p(contacto)</li>
+          <li><strong>Decisión</strong>: comparación con threshold calibrado → pred binario</li>
+        </ol>
+      </div>
+
+      <div>
+        <h3>Input → Output</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
+          <img src="assets/presentation/efficientnet_example.png" alt="EfficientNet-B0 sobre test_001049: p(contacto)=0.865">
+        </div>
+        <div class="caption">Mismo input (<code>test_001049.jpg</code>): el clasificador asigna alta probabilidad sin información espacial.</div>
+
+        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">0.144</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.753</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.242</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">0.208</div><div class="stat-label">AUC-PR</div></div>
+        </div>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mejor AUC-PR y AUC-ROC (0.880) de todos los modelos. Detecta 70 de 93 positivos.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 5 — SOLUCIÓN 3: RESNET50 + CAM
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>ResNet50 + CAM — Clasificador con localización implícita</h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <div class="stack">
+        <h3>Por qué lo probamos</h3>
+        <p>Para obtener <strong>bounding boxes "gratis" sin anotación manual</strong>: combina un clasificador binario robusto con Class Activation Maps que muestran qué región activó la decisión. Es un <strong>punto medio</strong> entre clasificación pura (sin localización) y detección entrenada (que requiere pseudo-labels).</p>
+
+        <h3>Características</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
+          <li>Backbone ResNet50 pre-entrenado en ImageNet</li>
+          <li>Input: imagen 224×224 normalizada con stats ImageNet</li>
+          <li>Output: pred binario + heatmap CAM 7×7 + bbox derivado + texto OCR</li>
+          <li>Loss: <code>CrossEntropyLoss</code> con class weights inversamente proporcionales</li>
+          <li>OCR de validación: Tesseract sobre la región derivada del CAM</li>
+        </ul>
+
+        <h3>Pipeline (5 etapas)</h3>
+        <ol class="steps">
+          <li><strong>Clasificación</strong>: ResNet50 predice contact / no contact (cabeza FC reemplazada por 2 clases)</li>
+          <li><strong>Extracción CAM</strong>: hook sobre <code>layer4</code> captura feature maps 7×7 × 2048 + pesos del classifier</li>
+          <li><strong>Bbox del CAM</strong>: heatmap se umbraliza, se upsample a 224×224 y se deriva la región rectangular</li>
+          <li><strong>OCR sobre la región</strong>: Tesseract extrae el texto de la zona localizada</li>
+          <li><strong>Validación regex</strong>: confirma si el texto matchea un patrón de contacto real</li>
+        </ol>
+      </div>
+
+      <div>
+        <h3>Input → Output</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
+          <img src="assets/presentation/resnet_cam_example.png" alt="ResNet50 + CAM sobre test_001049: p(contacto)=1.000">
+        </div>
+        <div class="caption">Mismo input (<code>test_001049.jpg</code>): clasifica con confianza máxima. El heatmap CAM se omite por falta de checkpoint local.</div>
+
+        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">0.132</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.753</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.224</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">0.202</div><div class="stat-label">AUC-PR</div></div>
+        </div>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mismo recall que EfficientNet (70 TP), pero 46 falsos positivos más.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 6 — SOLUCIÓN 4: OCR + REGEX (BASELINE SIN ENTRENAR)
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>OCR + Regex — Baseline sin entrenamiento</h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <div class="stack">
+        <h3>Por qué lo probamos</h3>
+        <p>Para responder la <strong>pregunta más crítica del proyecto</strong>: ¿hace falta entrenar algo? Si aplicando OCR + reglas llegamos a métricas competitivas, los modelos entrenados pierden justificación. Es la <strong>cota inferior de complejidad</strong> contra la que cualquier modelo aprendido debería ganar.</p>
+
+        <h3>Características</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
+          <li>EasyOCR con idiomas español + inglés</li>
+          <li>Regex de dominio: teléfonos AR, emails, handles sociales, URLs (IG/FB/WA), keywords ("whatsapp", "contactanos")</li>
+          <li>Sin parámetros aprendidos → cero entrenamiento, fácil de auditar</li>
+          <li>Decisión binaria: positiva si <strong>al menos una</strong> región matchea algún regex</li>
+        </ul>
+
+        <h3>Pipeline (4 etapas)</h3>
+        <ol class="steps">
+          <li><strong>OCR full-image</strong>: EasyOCR procesa la imagen completa → lista de (bbox, texto, confidence) por región detectada</li>
+          <li><strong>Filtro por confianza</strong>: se descartan regiones con conf &lt; 0.3 (típicas alucinaciones del OCR)</li>
+          <li><strong>Matching regex</strong>: cada texto se evalúa contra los patrones con prioridad email > social > keyword > phone</li>
+          <li><strong>Agregación</strong>: pred = 1 si al menos un match; score = max conf entre regiones que matchearon</li>
+        </ol>
+      </div>
+
+      <div>
+        <h3>Input → Output</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
+          <img src="assets/presentation/ocr_regex_example.png" alt="OCR + Regex sobre test_001049: 12 regiones, 2 matches (phone + social)">
+        </div>
+        <div class="caption">Mismo input (<code>test_001049.jpg</code>): EasyOCR detecta 12 regiones, regex matchea 2 — <code>phone</code> (+51 902 810 479) y <code>social</code> (@IAMSTEVENARMAS).</div>
+
+        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">0.409</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.194</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.263</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">91.5</div><div class="stat-label">ms / imagen</div></div>
+        </div>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mejor precisión y mejor F1 puntual, pero se pierde 4 de cada 5 positivos (R=0.194).</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 7 — MODELO ELEGIDO (DETALLE)
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Por qué elegimos <span style="color: var(--primary);">EfficientNet-B0</span></h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <div class="stack">
+        <h3>Cómo funciona</h3>
+        <ol class="steps">
+          <li><strong>Backbone EfficientNet-B0</strong> pre-entrenado en ImageNet extrae features visuales de la imagen completa.</li>
+          <li><strong>Cabeza binaria</strong> produce un logit para la clase contacto / no contacto.</li>
+          <li><strong>Sigmoid</strong> convierte el logit en probabilidad de contacto.</li>
+          <li><strong>Threshold calibrado</strong> en validación interna decide si la publicación debe ser marcada para revisión.</li>
+        </ol>
+
+        <h3 style="margin-top: 1rem;">Criterio de selección</h3>
+        <p>Como el test set tiene solo 93 positivos sobre 3.000 imágenes, accuracy y F1 aislados pueden ser engañosos. Para el análisis priorizamos recall, AUC-PR y AUC-ROC: métricas más informativas cuando la clase positiva es escasa y perder contactos reales es costoso.</p>
+        <div class="img-frame contain" style="margin-top: 1rem; aspect-ratio: 16/6;">
+          <img src="work/comparison/pr_roc_curves.png" alt="Curvas PR y ROC comparativas por modelo">
+        </div>
+        <div class="caption">Curvas PR/ROC exportadas desde <code>comparison.ipynb</code>.</div>
+      </div>
+
+      <div class="stack">
+        <h3>Justificación frente a los otros enfoques</h3>
+
+        <div class="card success">
+          <strong>vs. OCR full-image + regex</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">OCR+regex tiene mayor precisión y el F1 puntual más alto, pero detecta solo 18 de 93 positivos. EfficientNet-B0 detecta 70 de 93, por eso es mejor para no dejar pasar publicaciones con contacto.</span>
+        </div>
+
+        <div class="card success">
+          <strong>vs. ResNet50 + CAM</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">Ambos recuperan 70 positivos, pero EfficientNet-B0 logra menos falsos positivos, mayor precisión, mayor F1 y el mejor AUC-PR.</span>
+        </div>
+
+        <div class="card success">
+          <strong>vs. YOLOv8n / YOLOv8s</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">YOLO aporta localización, pero a nivel image-level queda por debajo: recall 0.333 y AUC-PR cercano a 0.14. Las pseudo-bboxes generadas con OCR introducen ruido y limitan la performance final.</span>
+        </div>
+
+        <div class="card primary" style="margin-top: 0.5rem;">
+          <strong>Modelo final elegido: <span class="mono">EfficientNet-B0</span></strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">Mejor ranking global: AUC-PR 0.208, AUC-ROC 0.880 y recall 0.753 sobre el mismo test set.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 8 — COMPARATIVA + TABLA + GRÁFICO
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Resultados comparativos y elección final</h2>
+
+    <h3 style="margin-top: 1rem;">Resumen</h3>
+    <div class="three-col" style="margin-top: 0.6rem; margin-bottom: 1.5rem;">
+      <div class="card success">
+        <strong>Modelo seleccionado</strong><br>
+        <span style="color:var(--text-soft); font-size:0.9rem;">EfficientNet-B0 logra el mejor AUC-PR y AUC-ROC, con el mayor recall junto con ResNet50+CAM.</span>
+      </div>
+      <div class="card accent">
+        <strong>Baseline más precisa</strong><br>
+        <span style="color:var(--text-soft); font-size:0.9rem;">OCR+regex casi no acusa falsos positivos, pero su recall es demasiado bajo: deja sin detectar 75 de 93 positivos.</span>
+      </div>
+      <div class="card primary">
+        <strong>YOLO como línea futura</strong><br>
+        <span style="color:var(--text-soft); font-size:0.9rem;">YOLO es útil si la prioridad es localizar la región, pero necesita mejores anotaciones o pseudo-labels menos ruidosas para ganar en test image-level.</span>
+      </div>
+    </div>
+
+    <div class="two-col" style="align-items: stretch;">
+      <!-- Tabla comparativa -->
+      <div>
+        <h3>Tabla comparativa</h3>
+        <table class="compare">
+          <thead>
+            <tr>
+              <th>Modelo</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1</th>
+              <th>AUC-PR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="winner">
+              <td>EfficientNet-B0</td>
+              <td class="metric">0.144</td>
+              <td class="metric">0.753</td>
+              <td class="metric">0.242</td>
+              <td class="metric">0.208</td>
+            </tr>
+            <tr>
+              <td>ResNet50 + CAM</td>
+              <td class="metric">0.132</td>
+              <td class="metric">0.753</td>
+              <td class="metric">0.224</td>
+              <td class="metric">0.202</td>
+            </tr>
+            <tr>
+              <td>OCR + regex (sin entrenar)</td>
+              <td class="metric">0.409</td>
+              <td class="metric">0.194</td>
+              <td class="metric">0.263</td>
+              <td class="metric">0.145</td>
+            </tr>
+            <tr>
+              <td>YOLOv8n</td>
+              <td class="metric">0.139</td>
+              <td class="metric">0.333</td>
+              <td class="metric">0.196</td>
+              <td class="metric">0.142</td>
+            </tr>
+            <tr>
+              <td>YOLOv8s</td>
+              <td class="metric">0.131</td>
+              <td class="metric">0.333</td>
+              <td class="metric">0.188</td>
+              <td class="metric">0.143</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.6rem;">★ = modelo elegido. Métricas a nivel imagen sobre el mismo test set: 3.000 imágenes, 93 positivas.</p>
+      </div>
+
+      <!-- Gráfico Chart.js -->
+      <div>
+        <h3>Comparación visual</h3>
+        <div class="chart-wrap">
+          <div class="img-frame contain" style="height: 100%; min-height: 260px;">
+            <img src="work/comparison/metrics_barplot.png" alt="Gráfico comparativo de métricas por modelo">
+          </div>
+        </div>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.6rem;">Imagen exportada desde <code>comparison.ipynb</code> con las métricas finales.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 9 — CIERRE
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide slide-title">
+    <h1 style="font-size: clamp(3rem, 7vw, 5.5rem);">Muchas Gracias</h1>
+    <p class="subtitle" style="margin-top: 1.5rem;">
+    </p>
+
+    <div class="team" style="margin-top: 2.5rem;">
+    </div>
+
+    <div class="institution">
+    </div>
+  </section>
+
+</main>
+
+<!-- Controles de navegación -->
+<nav class="nav" aria-label="Navegación de diapositivas">
+  <button id="navPrev" aria-label="Anterior">←</button>
+  <span class="nav-counter" id="navCounter">1 / 9</span>
+  <button id="navNext" aria-label="Siguiente">→</button>
+</nav>
+
+<!-- ============================================================
+     LÓGICA DEL DECK + DATOS DEL GRÁFICO
+     ============================================================ -->
+<script>
+  /* ----------- Navegación entre slides -------------- */
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  const counter = document.getElementById('navCounter');
+  const progressBar = document.getElementById('progressBar');
+  const btnPrev = document.getElementById('navPrev');
+  const btnNext = document.getElementById('navNext');
+
+  let current = 0;
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= totalSlides) return;
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'prev');
+      if (i === idx) s.classList.add('active');
+      else if (i < idx) s.classList.add('prev');
+    });
+    current = idx;
+    counter.textContent = `${idx + 1} / ${totalSlides}`;
+    progressBar.style.width = `${((idx + 1) / totalSlides) * 100}%`;
+    btnPrev.disabled = idx === 0;
+    btnNext.disabled = idx === totalSlides - 1;
+  }
+
+  btnPrev.addEventListener('click', () => goTo(current - 1));
+  btnNext.addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); goTo(current + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key))     { e.preventDefault(); goTo(current - 1); }
+    else if (e.key === 'Home')                            { goTo(0); }
+    else if (e.key === 'End')                             { goTo(totalSlides - 1); }
+  });
+
+  // Swipe táctil (tablets / pantalla touch)
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(dx) > 50) goTo(current + (dx < 0 ? 1 : -1));
+  });
+
+  goTo(0);
+
+
+  /* ============================================================
+     CHART_DATA — valores exportados desde comparison.ipynb
+     ============================================================ */
+  const CHART_DATA = {
+    labels: ['Precision', 'Recall', 'F1', 'AUC-PR'],
+    datasets: [
+      {
+        label: 'EfficientNet-B0',
+        // [P, R, F1, AUC-PR]
+        data: [0.144, 0.753, 0.242, 0.208],
+        backgroundColor: 'rgba(11, 95, 255, 0.85)',
+        borderColor: 'rgba(11, 95, 255, 1)',
+        borderWidth: 1,
+      },
+      {
+        label: 'ResNet50 + CAM',
+        data: [0.132, 0.753, 0.224, 0.202],
+        backgroundColor: 'rgba(230, 168, 0, 0.85)',
+        borderColor: 'rgba(230, 168, 0, 1)',
+        borderWidth: 1,
+      },
+      {
+        label: 'OCR + regex',
+        data: [0.409, 0.194, 0.263, 0.145],
+        backgroundColor: 'rgba(22, 163, 74, 0.85)',
+        borderColor: 'rgba(22, 163, 74, 1)',
+        borderWidth: 1,
+      },
+      {
+        label: 'YOLOv8n',
+        data: [0.139, 0.333, 0.196, 0.142],
+        backgroundColor: 'rgba(120, 120, 120, 0.85)',
+        borderColor: 'rgba(120, 120, 120, 1)',
+        borderWidth: 1,
+      },
+      {
+        label: 'YOLOv8s',
+        data: [0.131, 0.333, 0.188, 0.143],
+        backgroundColor: 'rgba(220, 38, 38, 0.75)',
+        borderColor: 'rgba(220, 38, 38, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  /* ----------- Gráfico comparativo -------------- */
+  const comparisonCanvas = document.getElementById('comparisonChart');
+  if (comparisonCanvas) {
+    const ctx = comparisonCanvas.getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: CHART_DATA,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Inter', size: 12 }, boxWidth: 14 },
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)}`,
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 1.0,
+            ticks: { stepSize: 0.1, font: { family: 'Inter' } },
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            title: { display: true, text: 'Score', font: { family: 'Inter', weight: '600' } },
+          },
+          x: {
+            ticks: { font: { family: 'Inter', size: 12 } },
+            grid: { display: false },
+          },
+        },
+      },
+    });
+  }
+</script>
+
+</body>
+</html>
