@@ -1,1 +1,0 @@
-dataset_imagenes/**/*.jpg filter=lfs diff=lfs merge=lfs -text

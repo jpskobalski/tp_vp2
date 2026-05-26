@@ -402,245 +402,295 @@
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 2 — PROBLEMA + DATASET
+       SLIDE 2 — DESCRIPCIÓN CONCEPTUAL DEL PROYECTO
        ════════════════════════════════════════════════════════════ -->
   <section class="slide">
-    <h2>El problema y el dataset</h2>
+    <h2>Descripción conceptual del proyecto</h2>
 
     <div class="two-col" style="margin-top: 1.5rem;">
-      <!-- Columna izquierda: descripción del problema -->
+      <!-- Columna izquierda: problema + propuesta -->
       <div class="stack">
-        <h3>¿Por qué es relevante?</h3>
-        <p>Las plataformas de e-commerce (MercadoLibre, eBay, etc.) prohíben que los vendedores incluyan datos de contacto en sus publicaciones para evitar que se salten la plataforma. Sin embargo, muchos vendedores <strong>esquivan el filtro de texto</strong> embebiendo teléfonos, emails o handles de WhatsApp directamente <strong>dentro de la imagen</strong>.</p>
+        <h3>El problema</h3>
+        <p>La inclusión <strong>encubierta de datos de contacto</strong> en publicaciones de e-commerce (números de teléfono, redes sociales, direcciones físicas, URLs externas) permite abrir canales de comunicación no controlados entre <strong>vendedores fraudulentos</strong> y compradores.</p>
 
-        <h3 style="margin-top:1rem;">¿Qué queremos resolver?</h3>
-        <p>Construir un sistema automático que, dada una imagen de publicación, detecte si contienen datos de contacto.</p>
+        <p>Estas prácticas <strong>violan las políticas de las plataformas</strong> y buscan inducir al comprador a concretar transacciones fuera del sistema — eludiendo los mecanismos de protección al consumidor.</p>
+
+        <div class="card primary" style="margin-top: 0.5rem;">
+          <strong>Nuestra propuesta</strong><br>
+          <span style="color:var(--text-soft); font-size:0.95rem;">Una solución de <strong>visión por computadora</strong> que clasifique automáticamente cada imagen según contenga o no datos de contacto. Aplicamos <strong>deep learning con transfer learning</strong> sobre arquitecturas pre-entrenadas para identificar patrones visuales que los sistemas convencionales (filtros de texto plano) no logran detectar.</span>
+        </div>
+      </div>
+
+      <!-- Columna derecha: figura ilustrativa -->
+      <div>
+        <div class="img-frame contain" style="aspect-ratio: 4/3;">
+          <img src="assets/presentation/problem_example.jpg" alt="Ejemplo de publicación con dato de contacto incrustado en la imagen">
+        </div>
+        <div class="caption"><strong>Figura 1.</strong> Caso típico: vendedor con número de teléfono superpuesto sobre el producto, ilegible para filtros de texto plano.</div>
 
         <div class="card accent" style="margin-top: 1rem;">
-          <strong>Ejemplo del problema</strong><br>
-          <span style="color:var(--text-soft); font-size:0.9rem;">Imagen con teléfono y WhatsApp incrustados sobre el producto, ilegibles para los filtros de texto plano.</span>
+          <strong>Aplicación práctica</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">Apoyo a equipos de moderación de e-commerce para flagear publicaciones sospechosas antes de su publicación pública.</span>
         </div>
-      </div>
-
-      <!-- Columna derecha: grid representativo del dataset -->
-      <div>
-        <div class="img-frame contain" style="aspect-ratio: 16/9;">
-          <img src="assets/presentation/dataset_samples_grid.jpg" alt="Muestras representativas del dataset: positivas y negativas">
-        </div>
-        <div class="caption">Fig. 1 — Muestras representativas del dataset: publicaciones de e-commerce con y sin datos de contacto incrustados.</div>
       </div>
     </div>
+  </section>
 
-    <h3 style="margin-top: 2rem;">Dataset utilizado</h3>
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 3 — DIAGRAMA GENERAL DE FUNCIONAMIENTO
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Diagrama general de funcionamiento</h2>
+
+    <div class="two-col" style="margin-top: 1rem; grid-template-columns: 1fr 1.4fr;">
+      <!-- Columna izquierda: flow.png -->
+      <div>
+        <div class="img-frame contain" style="aspect-ratio: 1198/1414; max-height: 78vh;">
+          <img src="assets/presentation/flow.png" alt="Diagrama de las 4 etapas del sistema">
+        </div>
+      </div>
+
+      <!-- Columna derecha: descripción compacta de cada etapa -->
+      <div class="stack-sm">
+        <div class="card primary">
+          <strong>① Preprocesamiento</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">Descarga de imágenes desde URLs reales de e-commerce. Etiquetado manual asistido por IA. Split <strong>train / val 85/15</strong>, resize a 384×384, normalización con stats ImageNet, augmentation suave (rotation + ColorJitter — sin flip ni crop para no destruir texto).</span>
+        </div>
+
+        <div class="card success">
+          <strong>② Fine tuning</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">3 arquitecturas pre-entrenadas: <strong>EfficientNet-B0, ResNet-50, ConvNeXT-Tiny</strong>. Cabeza FC reemplazada por salida binaria. <code>BCEWithLogitsLoss</code> + SGD (menos agresivo que Adam para fine-tuning). Threshold óptimo calibrado sobre validación.</span>
+        </div>
+
+        <div class="card accent">
+          <strong>③ Evaluación</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">Test set con <strong>distribución natural intacta</strong> (7% positivos). Preprocesamiento idéntico a val (resize + normalización, sin augmentation). Cálculo de P, R, F1, AUC-PR, AUC-ROC con el threshold calibrado.</span>
+        </div>
+
+        <div class="card">
+          <strong>④ Inferencia</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">Función que recibe el path de una imagen → preprocesa → clasifica → devuelve JSON con <code>{image_path, prediction, probability}</code>. Lista para integrarse en un pipeline de moderación.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 4 — DATASET + ASPECTOS A EVALUAR
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Dataset y aspectos a evaluar</h2>
+
+    <h3 style="margin-top: 0.8rem;">Composición del dataset</h3>
     <div class="stat-grid" style="margin-top: 0.6rem;">
-      <div class="stat"><div class="stat-value">10.000</div><div class="stat-label">Imágenes train</div></div>
-      <div class="stat"><div class="stat-value">~30%</div><div class="stat-label">Positivos en train (enriquecido)</div></div>
-      <div class="stat"><div class="stat-value">3.000</div><div class="stat-label">Imágenes test</div></div>
-      <div class="stat"><div class="stat-value">~3%</div><div class="stat-label">Positivos en test (distrib. natural)</div></div>
-      <div class="stat"><div class="stat-value">Binarios</div><div class="stat-label">Labels (sin bounding boxes)</div></div>
+      <div class="stat"><div class="stat-value">10.058</div><div class="stat-label">Imágenes train</div></div>
+      <div class="stat"><div class="stat-value">15%</div><div class="stat-label">Positivos en train</div></div>
+      <div class="stat"><div class="stat-value">8.549 / 1.509</div><div class="stat-label">Split train / val (85/15)</div></div>
+      <div class="stat"><div class="stat-value">2.700</div><div class="stat-label">Imágenes test</div></div>
+      <div class="stat"><div class="stat-value">7%</div><div class="stat-label">Positivos en test</div></div>
+      <div class="stat"><div class="stat-value">~800×800</div><div class="stat-label">Tamaño medio (RGB variable)</div></div>
     </div>
-  </section>
+    <p style="font-size: 0.88rem; color: var(--text-soft); margin-top: 0.6rem;">
+      Imágenes obtenidas de publicaciones reales recientes. Etiquetado <strong>manual con soporte de IA</strong> (Claude Enterprise) para acelerar el proceso. El desbalance de train se compensa <strong>forzando casos positivos adicionales</strong>; el test mantiene la proporción natural (~7%) para evaluación realista.
+    </p>
 
-
-  <!-- ════════════════════════════════════════════════════════════
-       SLIDE 3 — SOLUCIÓN 1: YOLO (DETECTOR)
-       ════════════════════════════════════════════════════════════ -->
-  <section class="slide">
-    <h2>Pipeline YOLO + OCR — Detección entrenada</h2>
-
-    <div class="two-col" style="margin-top: 1.2rem;">
-      <div class="stack">
-        <h3>Por qué lo probamos</h3>
-        <p>Para <strong>localizar Y clasificar</strong> regiones de texto sospechoso en una sola pasada. Hipótesis: si el detector acota la región, podemos correr OCR únicamente sobre las cajas detectadas (10–100× menos área que OCR full-image), bajando latencia sin perder cobertura. A diferencia de los otros modelos, YOLO es un <strong>pipeline multi-etapa</strong>, no un solo forward.</p>
-
-        <h3>Características</h3>
-        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
-          <li>4 clases: <span class="tag">phone</span> <span class="tag">email</span> <span class="tag">social</span> <span class="tag">keyword</span></li>
-          <li>Input: imagen 640×640 normalizada</li>
-          <li>Output: lista de bboxes + clase + confidence</li>
-          <li>Entrenado con <strong>weak supervision</strong> — sin bboxes manuales</li>
-          <li><span class="tag primary">Variantes probadas</span> YOLOv8n · YOLOv8s</li>
-        </ul>
-
-        <h3>Pipeline (5 etapas)</h3>
-        <ol class="steps">
-          <li><strong>Pseudo-labels</strong>: EasyOCR sobre positivos + regex (phone/email/social/keyword) → bboxes con clase</li>
-          <li><strong>Formato YOLO</strong>: conversión a (cx, cy, w, h) normalizadas + split train/val 85/15 + <code>data.yaml</code></li>
-          <li><strong>Entrenamiento</strong>: YOLOv8 desde pesos COCO, 50 epochs, batch 16, imgsz 640</li>
-          <li><strong>Inferencia</strong>: detector → bboxes con clase y confidence</li>
-          <li><strong>Post-proceso</strong>: crop por bbox + EasyOCR sobre el crop + regex valida el texto extraído</li>
-        </ol>
-      </div>
-
+    <div class="two-col" style="margin-top: 1.5rem; align-items: start;">
+      <!-- Columna izquierda: muestras del dataset -->
       <div>
-        <h3>Input → Output</h3>
-        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/yolo_example.jpg" alt="YOLO sobre test_001049.jpg: v8s acierta, v8n se la pierde">
+        <h3>Muestras representativas</h3>
+        <div class="img-frame contain" style="aspect-ratio: 16/9; margin-top: 0.4rem;">
+          <img src="assets/presentation/dataset_samples_grid.jpg" alt="Muestras del dataset">
         </div>
-        <div class="caption">Mismo input para los 4 modelos (<code>test_001049.jpg</code>): YOLOv8s la detecta, YOLOv8n se la pierde.</div>
+        <div class="caption">Ejemplos positivos y negativos del dataset etiquetado.</div>
+      </div>
 
-        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
-        <div class="stat-grid">
-          <div class="stat"><div class="stat-value">0.131</div><div class="stat-label">Precision</div></div>
-          <div class="stat"><div class="stat-value">0.333</div><div class="stat-label">Recall</div></div>
-          <div class="stat"><div class="stat-value">0.188</div><div class="stat-label">F1-Score</div></div>
-          <div class="stat"><div class="stat-value">0.143</div><div class="stat-label">AUC-PR</div></div>
-        </div>
-        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Valores image-level YOLOv8s sobre test (3.000 imágenes, 93 positivos). mAP@0.5 en validación interna: 0.530.</p>
+      <!-- Columna derecha: aspectos a evaluar -->
+      <div>
+        <h3>Aspectos a evaluar sobre el modelo ganador</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft); margin-top: 0.4rem;">
+          <li><strong>Resize de imagen:</strong> 380×380 vs. 512×512 — trade-off entre detección de texto pequeño y costo de entrenamiento en Colab.</li>
+          <li><strong>Capas fully connected adicionales:</strong> sumar una 2ª FC entre backbone y salida.</li>
+          <li><strong>Learning rates:</strong> distintos valores y schedules para backbone y cabeza.</li>
+          <li><strong>Complementos:</strong> integrar OCR (sobre crops) o Class Activation Maps para localización.</li>
+          <li><strong>Métrica del scheduler:</strong> <code>val_loss</code> vs <code>AUC-PR</code> como criterio de early stopping y reducción de LR.</li>
+        </ul>
       </div>
     </div>
   </section>
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 4 — SOLUCIÓN 2: EFFICIENTNET (CLASIF. BINARIA)
+       SLIDE 3 — MODELO 1: ResNet-50 (clásico, 2015)
        ════════════════════════════════════════════════════════════ -->
   <section class="slide">
-    <h2>EfficientNet-B0 — Clasificador binario</h2>
+    <h2>ResNet-50 — Arquitectura clásica (2015)</h2>
 
     <div class="two-col" style="margin-top: 1.2rem;">
       <div class="stack">
         <h3>Por qué lo probamos</h3>
-        <p>Porque <strong>se alinea directamente con los labels que tenemos</strong> (imagen-level 0/1), sin necesidad de generar pseudo-anotaciones. Es la baseline supervisada más simple y la que mejor explota lo que el dataset realmente ofrece. Si funciona bien, no necesitamos sumar complejidad.</p>
+        <p>Es la <strong>baseline clásica</strong> de la era moderna de CNNs: introdujo los <em>residual connections</em> que resolvieron el problema de degradación al apilar muchas capas. Sigue siendo el punto de referencia con el que se comparan arquitecturas más nuevas y tiene transfer learning extremadamente validado.</p>
 
         <h3>Características</h3>
         <ul style="padding-left: 1.2rem; color: var(--text-soft);">
-          <li>Backbone EfficientNet-B0 pre-entrenado en ImageNet</li>
+          <li>Backbone ResNet-50 pre-entrenado en ImageNet (~25M params)</li>
           <li>Input: imagen 384×384 normalizada con stats ImageNet</li>
-          <li>Output: probabilidad escalar p(contacto) ∈ [0, 1]</li>
-          <li>Loss: <code>BCEWithLogitsLoss</code> con <code>pos_weight</code> suavizado (√(neg/pos)) para el desbalance</li>
-          <li>Threshold de decisión calibrado en validación interna</li>
+          <li>Cabeza: <code>nn.Linear(2048, 1)</code> reemplaza la FC original</li>
+          <li>Output: logit escalar → sigmoid → p(contacto)</li>
+          <li>Bloques: bottleneck residual + BatchNorm + ReLU</li>
         </ul>
 
         <h3>Pipeline (4 etapas)</h3>
         <ol class="steps">
           <li><strong>Preprocesamiento</strong>: resize 384×384 + normalización ImageNet + augmentations (flip, rotation, color jitter)</li>
-          <li><strong>Forward</strong>: backbone EfficientNet-B0 extrae features de la imagen completa</li>
-          <li><strong>Cabeza binaria</strong>: <code>Linear(in_features, 1)</code> → logit → sigmoid → p(contacto)</li>
-          <li><strong>Decisión</strong>: comparación con threshold calibrado → pred binario</li>
+          <li><strong>Forward</strong>: backbone ResNet-50 produce un vector de features de dim 2048</li>
+          <li><strong>Cabeza binaria</strong>: <code>Linear(2048, 1)</code> → logit → sigmoid → p(contacto)</li>
+          <li><strong>Decisión</strong>: threshold calibrado en validación (0.66) → pred binario</li>
         </ol>
-      </div>
 
-      <div>
-        <h3>Input → Output</h3>
-        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/efficientnet_example.png" alt="EfficientNet-B0 sobre test_001049: p(contacto)=0.865">
-        </div>
-        <div class="caption">Mismo input (<code>test_001049.jpg</code>): el clasificador asigna alta probabilidad sin información espacial.</div>
-
-        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
-        <div class="stat-grid">
-          <div class="stat"><div class="stat-value">0.144</div><div class="stat-label">Precision</div></div>
-          <div class="stat"><div class="stat-value">0.753</div><div class="stat-label">Recall</div></div>
-          <div class="stat"><div class="stat-value">0.242</div><div class="stat-label">F1-Score</div></div>
-          <div class="stat"><div class="stat-value">0.208</div><div class="stat-label">AUC-PR</div></div>
-        </div>
-        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mejor AUC-PR y AUC-ROC (0.880) de todos los modelos. Detecta 70 de 93 positivos.</p>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SLIDE 5 — SOLUCIÓN 3: RESNET50 + CAM
-       ════════════════════════════════════════════════════════════ -->
-  <section class="slide">
-    <h2>ResNet50 + CAM — Clasificador con localización implícita</h2>
-
-    <div class="two-col" style="margin-top: 1.2rem;">
-      <div class="stack">
-        <h3>Por qué lo probamos</h3>
-        <p>Para obtener <strong>bounding boxes "gratis" sin anotación manual</strong>: combina un clasificador binario robusto con Class Activation Maps que muestran qué región activó la decisión. Es un <strong>punto medio</strong> entre clasificación pura (sin localización) y detección entrenada (que requiere pseudo-labels).</p>
-
-        <h3>Características</h3>
-        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
-          <li>Backbone ResNet50 pre-entrenado en ImageNet</li>
-          <li>Input: imagen 224×224 normalizada con stats ImageNet</li>
-          <li>Output: pred binario + heatmap CAM 7×7 + bbox derivado + texto OCR</li>
-          <li>Loss: <code>CrossEntropyLoss</code> con class weights inversamente proporcionales</li>
-          <li>OCR de validación: Tesseract sobre la región derivada del CAM</li>
+        <h3>Hiperparámetros</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft); font-size: 0.95rem;">
+          <li>30 epochs (early stopping patience=5 sobre val_loss)</li>
+          <li>Optimizer: SGD con LR escalonado — backbone 5e-4, cabeza 5e-3</li>
+          <li>Loss: <code>BCEWithLogitsLoss</code> con <code>pos_weight = √(neg/pos)</code></li>
         </ul>
-
-        <h3>Pipeline (5 etapas)</h3>
-        <ol class="steps">
-          <li><strong>Clasificación</strong>: ResNet50 predice contact / no contact (cabeza FC reemplazada por 2 clases)</li>
-          <li><strong>Extracción CAM</strong>: hook sobre <code>layer4</code> captura feature maps 7×7 × 2048 + pesos del classifier</li>
-          <li><strong>Bbox del CAM</strong>: heatmap se umbraliza, se upsample a 224×224 y se deriva la región rectangular</li>
-          <li><strong>OCR sobre la región</strong>: Tesseract extrae el texto de la zona localizada</li>
-          <li><strong>Validación regex</strong>: confirma si el texto matchea un patrón de contacto real</li>
-        </ol>
       </div>
 
       <div>
         <h3>Input → Output</h3>
         <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/resnet_cam_example.png" alt="ResNet50 + CAM sobre test_001049: p(contacto)=1.000">
+          <img src="assets/presentation/resnet50_example.jpg" alt="ResNet-50: clasificador binario sobre test_001049">
         </div>
-        <div class="caption">Mismo input (<code>test_001049.jpg</code>): clasifica con confianza máxima. El heatmap CAM se omite por falta de checkpoint local.</div>
+        <div class="caption">Clasificador binario puro sin información espacial: decide solo si la imagen contiene datos de contacto.</div>
 
         <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
         <div class="stat-grid">
-          <div class="stat"><div class="stat-value">0.132</div><div class="stat-label">Precision</div></div>
-          <div class="stat"><div class="stat-value">0.753</div><div class="stat-label">Recall</div></div>
-          <div class="stat"><div class="stat-value">0.224</div><div class="stat-label">F1-Score</div></div>
-          <div class="stat"><div class="stat-value">0.202</div><div class="stat-label">AUC-PR</div></div>
+          <div class="stat"><div class="stat-value">0.405</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.459</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.431</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">0.421</div><div class="stat-label">AUC-PR</div></div>
         </div>
-        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mismo recall que EfficientNet (70 TP), pero 46 falsos positivos más.</p>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mejor AUC-ROC del grupo (0.809). Threshold óptimo: 0.66. Detecta 90/196 positivos.</p>
       </div>
     </div>
   </section>
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 6 — SOLUCIÓN 4: OCR + REGEX (BASELINE SIN ENTRENAR)
+       SLIDE 4 — MODELO 2: EfficientNet-B0 (eficiencia, 2019) ⭐ winner
        ════════════════════════════════════════════════════════════ -->
   <section class="slide">
-    <h2>OCR + Regex — Baseline sin entrenamiento</h2>
+    <h2>EfficientNet-B0 — Eficiencia escalada (2019)</h2>
 
     <div class="two-col" style="margin-top: 1.2rem;">
       <div class="stack">
         <h3>Por qué lo probamos</h3>
-        <p>Para responder la <strong>pregunta más crítica del proyecto</strong>: ¿hace falta entrenar algo? Si aplicando OCR + reglas llegamos a métricas competitivas, los modelos entrenados pierden justificación. Es la <strong>cota inferior de complejidad</strong> contra la que cualquier modelo aprendido debería ganar.</p>
+        <p>Familia de arquitecturas que <strong>balancea profundidad, ancho y resolución</strong> mediante <em>compound scaling</em>. La variante B0 logra la <strong>mejor relación accuracy/parámetros</strong> de su época, con ~5M params (vs 25M de ResNet-50) — ideal para deploy real en moderación a gran escala.</p>
 
         <h3>Características</h3>
         <ul style="padding-left: 1.2rem; color: var(--text-soft);">
-          <li>EasyOCR con idiomas español + inglés</li>
-          <li>Regex de dominio: teléfonos AR, emails, handles sociales, URLs (IG/FB/WA), keywords ("whatsapp", "contactanos")</li>
-          <li>Sin parámetros aprendidos → cero entrenamiento, fácil de auditar</li>
-          <li>Decisión binaria: positiva si <strong>al menos una</strong> región matchea algún regex</li>
+          <li>Backbone EfficientNet-B0 pre-entrenado en ImageNet (~5M params)</li>
+          <li>Input: imagen 384×384 normalizada con stats ImageNet</li>
+          <li>Cabeza: <code>model.classifier[1] = nn.Linear(in, 1)</code></li>
+          <li>Output: logit escalar → sigmoid → p(contacto)</li>
+          <li>Bloques: MBConv depthwise separable + SE attention</li>
         </ul>
 
         <h3>Pipeline (4 etapas)</h3>
         <ol class="steps">
-          <li><strong>OCR full-image</strong>: EasyOCR procesa la imagen completa → lista de (bbox, texto, confidence) por región detectada</li>
-          <li><strong>Filtro por confianza</strong>: se descartan regiones con conf &lt; 0.3 (típicas alucinaciones del OCR)</li>
-          <li><strong>Matching regex</strong>: cada texto se evalúa contra los patrones con prioridad email > social > keyword > phone</li>
-          <li><strong>Agregación</strong>: pred = 1 si al menos un match; score = max conf entre regiones que matchearon</li>
+          <li><strong>Preprocesamiento</strong>: resize 384×384 + normalización ImageNet + augmentations (flip, rotation, color jitter)</li>
+          <li><strong>Forward</strong>: backbone EfficientNet-B0 produce vector de features de dim 1280</li>
+          <li><strong>Cabeza binaria</strong>: <code>Linear(1280, 1)</code> → logit → sigmoid → p(contacto)</li>
+          <li><strong>Decisión</strong>: threshold calibrado en validación (0.67) → pred binario</li>
         </ol>
+
+        <h3>Hiperparámetros</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft); font-size: 0.95rem;">
+          <li>30 epochs (early stopping patience=5 sobre val_loss)</li>
+          <li>Optimizer: SGD con LR escalonado — features 5e-4, classifier 5e-3</li>
+          <li>Loss: <code>BCEWithLogitsLoss</code> con <code>pos_weight = √(neg/pos)</code></li>
+        </ul>
       </div>
 
       <div>
         <h3>Input → Output</h3>
         <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/ocr_regex_example.png" alt="OCR + Regex sobre test_001049: 12 regiones, 2 matches (phone + social)">
+          <img src="assets/presentation/efficientnet_example.png" alt="EfficientNet-B0 sobre test_001049: clasificador binario">
         </div>
-        <div class="caption">Mismo input (<code>test_001049.jpg</code>): EasyOCR detecta 12 regiones, regex matchea 2 — <code>phone</code> (+51 902 810 479) y <code>social</code> (@IAMSTEVENARMAS).</div>
+        <div class="caption">Clasificador binario con la mejor relación accuracy/parámetros de los 3 modelos evaluados.</div>
 
         <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
         <div class="stat-grid">
-          <div class="stat"><div class="stat-value">0.409</div><div class="stat-label">Precision</div></div>
-          <div class="stat"><div class="stat-value">0.194</div><div class="stat-label">Recall</div></div>
-          <div class="stat"><div class="stat-value">0.263</div><div class="stat-label">F1-Score</div></div>
-          <div class="stat"><div class="stat-value">91.5</div><div class="stat-label">ms / imagen</div></div>
+          <div class="stat"><div class="stat-value">0.471</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.459</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.465</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">0.488</div><div class="stat-label">AUC-PR</div></div>
         </div>
-        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mejor precisión y mejor F1 puntual, pero se pierde 4 de cada 5 positivos (R=0.194).</p>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">★ Mejor F1 y AUC-PR del grupo. Threshold óptimo: 0.67. Detecta 90/196 positivos con menos falsos positivos que ResNet-50.</p>
       </div>
     </div>
   </section>
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 7 — MODELO ELEGIDO (DETALLE)
+       SLIDE 5 — MODELO 3: ConvNeXT-Tiny (moderno, 2022)
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>ConvNeXT-Tiny — CNN moderna inspirada en Transformers (2022)</h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <div class="stack">
+        <h3>Por qué lo probamos</h3>
+        <p>Es una <strong>reformulación moderna de las CNNs</strong> que incorpora ideas de Vision Transformers (kernels grandes 7×7, LayerNorm, GELU, depthwise separable convs) y <strong>matchea o supera a Swin Transformer</strong> con menor latencia. Lo probamos para ver si las mejoras arquitectónicas recientes se traducen en mejoras sobre nuestro caso de uso.</p>
+
+        <h3>Características</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft);">
+          <li>Backbone ConvNeXT-Tiny pre-entrenado en ImageNet (~28M params)</li>
+          <li>Input: imagen 384×384 normalizada con stats ImageNet</li>
+          <li>Cabeza: <code>model.classifier[2] = nn.Linear(in, 1)</code></li>
+          <li>Output: logit escalar → sigmoid → p(contacto)</li>
+          <li>Bloques: depthwise conv 7×7 + LayerNorm + GELU + inverted bottleneck</li>
+        </ul>
+
+        <h3>Pipeline (4 etapas)</h3>
+        <ol class="steps">
+          <li><strong>Preprocesamiento</strong>: resize 384×384 + normalización ImageNet + augmentations</li>
+          <li><strong>Forward</strong>: backbone ConvNeXT-Tiny produce vector de features de dim 768</li>
+          <li><strong>Cabeza binaria</strong>: <code>Linear(768, 1)</code> → logit → sigmoid → p(contacto)</li>
+          <li><strong>Decisión</strong>: threshold calibrado en validación (0.71) → pred binario</li>
+        </ol>
+
+        <h3>Hiperparámetros</h3>
+        <ul style="padding-left: 1.2rem; color: var(--text-soft); font-size: 0.95rem;">
+          <li>30 epochs (early stopping patience=5 sobre val_loss)</li>
+          <li>Optimizer: SGD con LR escalonado — features 5e-4, classifier 5e-3</li>
+          <li>Loss: <code>BCEWithLogitsLoss</code> con <code>pos_weight = √(neg/pos)</code></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Input → Output</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
+          <img src="assets/presentation/convnext_example.jpg" alt="ConvNeXT-Tiny: clasificador binario sobre test_001049">
+        </div>
+        <div class="caption">Arquitectura más reciente, pero termina <strong>siendo la más conservadora</strong>: prioriza precisión a costa de recall.</div>
+
+        <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">0.496</div><div class="stat-label">Precision</div></div>
+          <div class="stat"><div class="stat-value">0.306</div><div class="stat-label">Recall</div></div>
+          <div class="stat"><div class="stat-value">0.379</div><div class="stat-label">F1-Score</div></div>
+          <div class="stat"><div class="stat-value">0.403</div><div class="stat-label">AUC-PR</div></div>
+        </div>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Mejor precisión del grupo (0.496) pero recall bajo: solo detecta 60/196 positivos. Threshold 0.71 demasiado conservador.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 6 — MODELO ELEGIDO (DETALLE)
        ════════════════════════════════════════════════════════════ -->
   <section class="slide">
     <h2>Por qué elegimos <span style="color: var(--primary);">EfficientNet-B0</span></h2>
@@ -649,41 +699,56 @@
       <div class="stack">
         <h3>Cómo funciona</h3>
         <ol class="steps">
-          <li><strong>Backbone EfficientNet-B0</strong> pre-entrenado en ImageNet extrae features visuales de la imagen completa.</li>
-          <li><strong>Cabeza binaria</strong> produce un logit para la clase contacto / no contacto.</li>
-          <li><strong>Sigmoid</strong> convierte el logit en probabilidad de contacto.</li>
-          <li><strong>Threshold calibrado</strong> en validación interna decide si la publicación debe ser marcada para revisión.</li>
+          <li><strong>Backbone EfficientNet-B0</strong> pre-entrenado en ImageNet extrae features visuales de la imagen completa (vector dim 1280).</li>
+          <li><strong>Cabeza binaria</strong> (<code>Linear(1280, 1)</code>) produce un logit escalar.</li>
+          <li><strong>Sigmoid</strong> convierte el logit en probabilidad p(contacto) ∈ [0, 1].</li>
+          <li><strong>Threshold 0.67</strong> calibrado en validación decide si la publicación debe ser marcada para revisión.</li>
         </ol>
 
         <h3 style="margin-top: 1rem;">Criterio de selección</h3>
-        <p>Como el test set tiene solo 93 positivos sobre 3.000 imágenes, accuracy y F1 aislados pueden ser engañosos. Para el análisis priorizamos recall, AUC-PR y AUC-ROC: métricas más informativas cuando la clase positiva es escasa y perder contactos reales es costoso.</p>
-        <div class="img-frame contain" style="margin-top: 1rem; aspect-ratio: 16/6;">
-          <img src="work/comparison/pr_roc_curves.png" alt="Curvas PR y ROC comparativas por modelo">
+        <p>El test set tiene 196 positivos sobre 2.700 imágenes (~7.3%). Como la clase positiva es escasa y perder contactos reales es costoso (false negatives = publicaciones evadiendo política), priorizamos <strong>F1</strong> (balance P/R) y <strong>AUC-PR</strong> (ranking robusto al desbalance). EfficientNet-B0 lidera ambas.</p>
+
+        <div class="stat-grid" style="margin-top: 1rem;">
+          <div class="stat" style="background: var(--success-soft); border-color: #86efac;">
+            <div class="stat-value" style="color: var(--success);">0.465</div>
+            <div class="stat-label">F1 — ganador</div>
+          </div>
+          <div class="stat" style="background: var(--success-soft); border-color: #86efac;">
+            <div class="stat-value" style="color: var(--success);">0.488</div>
+            <div class="stat-label">AUC-PR — ganador</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">90 / 196</div>
+            <div class="stat-label">Positivos detectados</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">5M</div>
+            <div class="stat-label">Parámetros (vs 25-28M)</div>
+          </div>
         </div>
-        <div class="caption">Curvas PR/ROC exportadas desde <code>comparison.ipynb</code>.</div>
       </div>
 
       <div class="stack">
         <h3>Justificación frente a los otros enfoques</h3>
 
         <div class="card success">
-          <strong>vs. OCR full-image + regex</strong><br>
-          <span style="color:var(--text-soft); font-size:0.9rem;">OCR+regex tiene mayor precisión y el F1 puntual más alto, pero detecta solo 18 de 93 positivos. EfficientNet-B0 detecta 70 de 93, por eso es mejor para no dejar pasar publicaciones con contacto.</span>
+          <strong>vs. ResNet-50</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">Mismo recall (90/196 positivos detectados) pero EfficientNet-B0 logra <strong>31 falsos positivos menos</strong> (101 vs 132). Resultado: mayor precisión (0.471 vs 0.405), mejor F1 (0.465 vs 0.431) y mejor AUC-PR (0.488 vs 0.421) — todo con 5× menos parámetros.</span>
         </div>
 
         <div class="card success">
-          <strong>vs. ResNet50 + CAM</strong><br>
-          <span style="color:var(--text-soft); font-size:0.9rem;">Ambos recuperan 70 positivos, pero EfficientNet-B0 logra menos falsos positivos, mayor precisión, mayor F1 y el mejor AUC-PR.</span>
+          <strong>vs. ConvNeXT-Tiny</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">ConvNeXT tiene mejor precisión puntual (0.496) pero su threshold óptimo es demasiado conservador: solo detecta 60/196 positivos (recall 0.306). EfficientNet-B0 atrapa 30 positivos más, con apenas 40 falsos positivos más — claramente preferible para moderación.</span>
         </div>
 
         <div class="card success">
-          <strong>vs. YOLOv8n / YOLOv8s</strong><br>
-          <span style="color:var(--text-soft); font-size:0.9rem;">YOLO aporta localización, pero a nivel image-level queda por debajo: recall 0.333 y AUC-PR cercano a 0.14. Las pseudo-bboxes generadas con OCR introducen ruido y limitan la performance final.</span>
+          <strong>Eficiencia computacional</strong><br>
+          <span style="color:var(--text-soft); font-size:0.9rem;">~5M parámetros vs ~25M (ResNet-50) y ~28M (ConvNeXT-Tiny). Menor latencia y menor consumo de memoria — crítico para deploy a escala en moderación de e-commerce.</span>
         </div>
 
         <div class="card primary" style="margin-top: 0.5rem;">
           <strong>Modelo final elegido: <span class="mono">EfficientNet-B0</span></strong><br>
-          <span style="color:var(--text-soft); font-size:0.9rem;">Mejor ranking global: AUC-PR 0.208, AUC-ROC 0.880 y recall 0.753 sobre el mismo test set.</span>
+          <span style="color:var(--text-soft); font-size:0.9rem;">Mejor F1 (0.465), mejor AUC-PR (0.488), mejor balance precision/recall y menor tamaño del modelo.</span>
         </div>
       </div>
     </div>
@@ -691,7 +756,7 @@
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 8 — COMPARATIVA + TABLA + GRÁFICO
+       SLIDE 7 — COMPARATIVA + TABLA + GRÁFICO
        ════════════════════════════════════════════════════════════ -->
   <section class="slide">
     <h2>Resultados comparativos y elección final</h2>
@@ -699,16 +764,16 @@
     <h3 style="margin-top: 1rem;">Resumen</h3>
     <div class="three-col" style="margin-top: 0.6rem; margin-bottom: 1.5rem;">
       <div class="card success">
-        <strong>Modelo seleccionado</strong><br>
-        <span style="color:var(--text-soft); font-size:0.9rem;">EfficientNet-B0 logra el mejor AUC-PR y AUC-ROC, con el mayor recall junto con ResNet50+CAM.</span>
-      </div>
-      <div class="card accent">
-        <strong>Baseline más precisa</strong><br>
-        <span style="color:var(--text-soft); font-size:0.9rem;">OCR+regex casi no acusa falsos positivos, pero su recall es demasiado bajo: deja sin detectar 75 de 93 positivos.</span>
+        <strong>★ Modelo seleccionado — EfficientNet-B0</strong><br>
+        <span style="color:var(--text-soft); font-size:0.9rem;">Mejor F1 (0.465), mejor AUC-PR (0.488). Combina alto recall (0.459) con la mayor precisión entre los que detectan ≥90 positivos. Solo ~5M parámetros.</span>
       </div>
       <div class="card primary">
-        <strong>YOLO como línea futura</strong><br>
-        <span style="color:var(--text-soft); font-size:0.9rem;">YOLO es útil si la prioridad es localizar la región, pero necesita mejores anotaciones o pseudo-labels menos ruidosas para ganar en test image-level.</span>
+        <strong>ResNet-50 — runner-up</strong><br>
+        <span style="color:var(--text-soft); font-size:0.9rem;">Mismo recall que el ganador (90/196 positivos), pero con 31 falsos positivos más. Mejor AUC-ROC del grupo (0.809). Arquitectura clásica que sigue siendo competitiva.</span>
+      </div>
+      <div class="card accent">
+        <strong>ConvNeXT-Tiny — más conservador</strong><br>
+        <span style="color:var(--text-soft); font-size:0.9rem;">Mejor precisión (0.496) pero solo 60/196 positivos detectados. Threshold óptimo demasiado alto. Útil si el costo de falsos positivos fuera prohibitivo.</span>
       </div>
     </div>
 
@@ -724,65 +789,53 @@
               <th>Recall</th>
               <th>F1</th>
               <th>AUC-PR</th>
+              <th>AUC-ROC</th>
             </tr>
           </thead>
           <tbody>
             <tr class="winner">
               <td>EfficientNet-B0</td>
-              <td class="metric">0.144</td>
-              <td class="metric">0.753</td>
-              <td class="metric">0.242</td>
-              <td class="metric">0.208</td>
+              <td class="metric">0.471</td>
+              <td class="metric">0.459</td>
+              <td class="metric">0.465</td>
+              <td class="metric">0.488</td>
+              <td class="metric">0.795</td>
             </tr>
             <tr>
-              <td>ResNet50 + CAM</td>
-              <td class="metric">0.132</td>
-              <td class="metric">0.753</td>
-              <td class="metric">0.224</td>
-              <td class="metric">0.202</td>
+              <td>ResNet-50</td>
+              <td class="metric">0.405</td>
+              <td class="metric">0.459</td>
+              <td class="metric">0.431</td>
+              <td class="metric">0.421</td>
+              <td class="metric">0.809</td>
             </tr>
             <tr>
-              <td>OCR + regex (sin entrenar)</td>
-              <td class="metric">0.409</td>
-              <td class="metric">0.194</td>
-              <td class="metric">0.263</td>
-              <td class="metric">0.145</td>
-            </tr>
-            <tr>
-              <td>YOLOv8n</td>
-              <td class="metric">0.139</td>
-              <td class="metric">0.333</td>
-              <td class="metric">0.196</td>
-              <td class="metric">0.142</td>
-            </tr>
-            <tr>
-              <td>YOLOv8s</td>
-              <td class="metric">0.131</td>
-              <td class="metric">0.333</td>
-              <td class="metric">0.188</td>
-              <td class="metric">0.143</td>
+              <td>ConvNeXT-Tiny</td>
+              <td class="metric">0.496</td>
+              <td class="metric">0.306</td>
+              <td class="metric">0.379</td>
+              <td class="metric">0.403</td>
+              <td class="metric">0.807</td>
             </tr>
           </tbody>
         </table>
-        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.6rem;">★ = modelo elegido. Métricas a nivel imagen sobre el mismo test set: 3.000 imágenes, 93 positivas.</p>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.6rem;">★ = modelo elegido. Métricas a nivel imagen sobre el mismo test set: <strong>2.700 imágenes, 196 positivas (~7.3%)</strong>. Threshold por modelo calibrado en validación interna.</p>
       </div>
 
-      <!-- Gráfico Chart.js -->
+      <!-- Gráfico Chart.js (renderizado en vivo desde CHART_DATA al final del script) -->
       <div>
         <h3>Comparación visual</h3>
-        <div class="chart-wrap">
-          <div class="img-frame contain" style="height: 100%; min-height: 260px;">
-            <img src="work/comparison/metrics_barplot.png" alt="Gráfico comparativo de métricas por modelo">
-          </div>
+        <div class="chart-wrap" style="min-height: 360px;">
+          <canvas id="comparisonChart"></canvas>
         </div>
-        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.6rem;">Imagen exportada desde <code>comparison.ipynb</code> con las métricas finales.</p>
+        <p style="font-size:0.82rem; color: var(--text-muted); margin-top: 0.6rem;">Bar chart interactivo (Chart.js) renderizado desde <code>CHART_DATA</code> al final del HTML.</p>
       </div>
     </div>
   </section>
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 9 — CIERRE
+       SLIDE 8 — CIERRE
        ════════════════════════════════════════════════════════════ -->
   <section class="slide slide-title">
     <h1 style="font-size: clamp(3rem, 7vw, 5.5rem);">Muchas Gracias</h1>
@@ -801,7 +854,7 @@
 <!-- Controles de navegación -->
 <nav class="nav" aria-label="Navegación de diapositivas">
   <button id="navPrev" aria-label="Anterior">←</button>
-  <span class="nav-counter" id="navCounter">1 / 9</span>
+  <span class="nav-counter" id="navCounter">1 / 10</span>
   <button id="navNext" aria-label="Siguiente">→</button>
 </nav>
 
@@ -855,45 +908,32 @@
 
 
   /* ============================================================
-     CHART_DATA — valores exportados desde comparison.ipynb
+     CHART_DATA — métricas del test set (2.700 imgs, 196 positivos)
+     Para actualizar: editar los arrays `data: [P, R, F1, AUC-PR, AUC-ROC]`
      ============================================================ */
   const CHART_DATA = {
-    labels: ['Precision', 'Recall', 'F1', 'AUC-PR'],
+    labels: ['Precision', 'Recall', 'F1', 'AUC-PR', 'AUC-ROC'],
     datasets: [
       {
+        // ⭐ Ganador
         label: 'EfficientNet-B0',
-        // [P, R, F1, AUC-PR]
-        data: [0.144, 0.753, 0.242, 0.208],
+        data: [0.471, 0.459, 0.465, 0.488, 0.795],
         backgroundColor: 'rgba(11, 95, 255, 0.85)',
         borderColor: 'rgba(11, 95, 255, 1)',
         borderWidth: 1,
       },
       {
-        label: 'ResNet50 + CAM',
-        data: [0.132, 0.753, 0.224, 0.202],
+        label: 'ResNet-50',
+        data: [0.405, 0.459, 0.431, 0.421, 0.809],
         backgroundColor: 'rgba(230, 168, 0, 0.85)',
         borderColor: 'rgba(230, 168, 0, 1)',
         borderWidth: 1,
       },
       {
-        label: 'OCR + regex',
-        data: [0.409, 0.194, 0.263, 0.145],
+        label: 'ConvNeXT-Tiny',
+        data: [0.496, 0.306, 0.379, 0.403, 0.807],
         backgroundColor: 'rgba(22, 163, 74, 0.85)',
         borderColor: 'rgba(22, 163, 74, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'YOLOv8n',
-        data: [0.139, 0.333, 0.196, 0.142],
-        backgroundColor: 'rgba(120, 120, 120, 0.85)',
-        borderColor: 'rgba(120, 120, 120, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'YOLOv8s',
-        data: [0.131, 0.333, 0.188, 0.143],
-        backgroundColor: 'rgba(220, 38, 38, 0.75)',
-        borderColor: 'rgba(220, 38, 38, 1)',
         borderWidth: 1,
       },
     ],
