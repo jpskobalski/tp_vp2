@@ -1,0 +1,39 @@
+# =============================================================================
+# Requirements — TP final Visión por Computadora 2 (CEIA)
+# =============================================================================
+#
+# Instalar torch PRIMERO con el build correcto para tu hardware:
+#   - Mac (Apple Silicon):  pip install torch torchvision
+#   - Linux/Win + NVIDIA:   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#   - CPU only:             pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#
+# Después: pip install -r requirements.txt
+# =============================================================================
+
+# Deep learning core
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Modelos / visión
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# Datos / métricas
+pandas>=2.0.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0
+pyyaml>=6.0
+
+# Visualización
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Notebooks + utilidades
+jupyter>=1.0.0
+ipykernel>=6.25.0
+ipywidgets>=8.0.0
+tqdm>=4.65.0
+nbformat>=5.9.0
+
+# Portal de inferencia (inferencia_app.py)
+gradio>=4.0.0
