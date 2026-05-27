@@ -1,0 +1,6 @@
+imagen,EfficientNet-B0_prob,EfficientNet-B0_pred,ResNet-50_prob,ResNet-50_pred,ConvNeXT-Tiny_prob,ConvNeXT-Tiny_pred
+prueb-positiva.webp,0.7784,CONTACTO,0.8841,CONTACTO,0.8216,CONTACTO
+prueba negativa 2.jpg,0.0254,sin contacto,0.0342,sin contacto,0.0762,sin contacto
+prueba negativa.jpg,0.1946,sin contacto,0.222,sin contacto,0.1609,sin contacto
+prueba positiva instagram.webp,0.9712,CONTACTO,0.8397,CONTACTO,0.7307,CONTACTO
+prueba-mapa.jpg,0.9987,CONTACTO,0.9996,CONTACTO,0.8748,CONTACTO

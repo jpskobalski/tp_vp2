@@ -438,46 +438,6 @@
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 3 — DIAGRAMA GENERAL DE FUNCIONAMIENTO
-       ════════════════════════════════════════════════════════════ -->
-  <section class="slide">
-    <h2>Diagrama general de funcionamiento</h2>
-
-    <div class="two-col" style="margin-top: 1rem; grid-template-columns: 1fr 1.4fr;">
-      <!-- Columna izquierda: flow.png -->
-      <div>
-        <div class="img-frame contain" style="aspect-ratio: 1198/1414; max-height: 78vh;">
-          <img src="assets/presentation/flow.png" alt="Diagrama de las 4 etapas del sistema">
-        </div>
-      </div>
-
-      <!-- Columna derecha: descripción compacta de cada etapa -->
-      <div class="stack-sm">
-        <div class="card primary">
-          <strong>① Preprocesamiento</strong><br>
-          <span style="color:var(--text-soft); font-size:0.92rem;">Descarga de imágenes desde URLs reales de e-commerce. Etiquetado manual asistido por IA. Split <strong>train / val 85/15</strong>, resize a 384×384, normalización con stats ImageNet, augmentation suave (rotation + ColorJitter — sin flip ni crop para no destruir texto).</span>
-        </div>
-
-        <div class="card success">
-          <strong>② Fine tuning</strong><br>
-          <span style="color:var(--text-soft); font-size:0.92rem;">3 arquitecturas pre-entrenadas: <strong>EfficientNet-B0, ResNet-50, ConvNeXT-Tiny</strong>. Cabeza FC reemplazada por salida binaria. <code>BCEWithLogitsLoss</code> + SGD (menos agresivo que Adam para fine-tuning). Threshold óptimo calibrado sobre validación.</span>
-        </div>
-
-        <div class="card accent">
-          <strong>③ Evaluación</strong><br>
-          <span style="color:var(--text-soft); font-size:0.92rem;">Test set con <strong>distribución natural intacta</strong> (7% positivos). Preprocesamiento idéntico a val (resize + normalización, sin augmentation). Cálculo de P, R, F1, AUC-PR, AUC-ROC con el threshold calibrado.</span>
-        </div>
-
-        <div class="card">
-          <strong>④ Inferencia</strong><br>
-          <span style="color:var(--text-soft); font-size:0.92rem;">Función que recibe el path de una imagen → preprocesa → clasifica → devuelve JSON con <code>{image_path, prediction, probability}</code>. Lista para integrarse en un pipeline de moderación.</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
        SLIDE 4 — DATASET + ASPECTOS A EVALUAR
        ════════════════════════════════════════════════════════════ -->
   <section class="slide">
@@ -521,6 +481,46 @@
   </section>
 
 
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 3 — DIAGRAMA GENERAL DE FUNCIONAMIENTO
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Diagrama general de funcionamiento</h2>
+
+    <div class="two-col" style="margin-top: 1rem; grid-template-columns: 1fr 1.4fr;">
+      <!-- Columna izquierda: flow.png -->
+      <div>
+        <div class="img-frame contain" style="aspect-ratio: 1198/1414; max-height: 78vh;">
+          <img src="assets/presentation/flow.png" alt="Diagrama de las 4 etapas del sistema">
+        </div>
+      </div>
+
+      <!-- Columna derecha: descripción compacta de cada etapa -->
+      <div class="stack-sm">
+        <div class="card primary">
+          <strong>① Preprocesamiento</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">Descarga de imágenes desde URLs reales de e-commerce. Etiquetado manual asistido por IA. Split <strong>train / val 85/15</strong>, resize a 384×384, normalización con stats ImageNet, augmentation suave (rotation + ColorJitter — sin flip ni crop para no destruir texto).</span>
+        </div>
+
+        <div class="card success">
+          <strong>② Fine tuning</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">3 arquitecturas pre-entrenadas: <strong>EfficientNet-B0, ResNet-50, ConvNeXT-Tiny</strong>. Cabeza FC reemplazada por salida binaria. <code>BCEWithLogitsLoss</code> + SGD (menos agresivo que Adam para fine-tuning). Threshold óptimo calibrado sobre validación.</span>
+        </div>
+
+        <div class="card accent">
+          <strong>③ Evaluación</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">Test set con <strong>distribución natural intacta</strong> (7% positivos). Preprocesamiento idéntico a val (resize + normalización, sin augmentation). Cálculo de P, R, F1, AUC-PR, AUC-ROC con el threshold calibrado.</span>
+        </div>
+
+        <div class="card">
+          <strong>④ Inferencia</strong><br>
+          <span style="color:var(--text-soft); font-size:0.92rem;">Función que recibe el path de una imagen → preprocesa → clasifica → devuelve JSON con <code>{image_path, prediction, probability}</code>. Lista para integrarse en un pipeline de moderación.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  
   <!-- ════════════════════════════════════════════════════════════
        SLIDE 3 — MODELO 1: ResNet-50 (clásico, 2015)
        ════════════════════════════════════════════════════════════ -->
@@ -558,11 +558,14 @@
       </div>
 
       <div>
-        <h3>Input → Output</h3>
-        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/resnet50_example.jpg" alt="ResNet-50: clasificador binario sobre test_001049">
+        <h3>Ejemplo de inferencia</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1/1; max-height: 42vh;">
+          <img src="assets/presentation/prueba_mapa.jpg" alt="Publicación de prueba con dirección/mapa">
         </div>
-        <div class="caption">Clasificador binario puro sin información espacial: decide solo si la imagen contiene datos de contacto.</div>
+        <div class="caption" style="font-size: 1.05rem; color: var(--text); margin-top: 0.6rem;">
+          <strong>p(contacto) = 100.0%</strong> &nbsp;→&nbsp; CONTACTO
+          <br><span style="font-size: 0.82rem; color: var(--text-muted);">(umbral 0.66)</span>
+        </div>
 
         <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
         <div class="stat-grid">
@@ -614,11 +617,14 @@
       </div>
 
       <div>
-        <h3>Input → Output</h3>
-        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/efficientnet_example.png" alt="EfficientNet-B0 sobre test_001049: clasificador binario">
+        <h3>Ejemplo de inferencia</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1/1; max-height: 42vh;">
+          <img src="assets/presentation/prueba_mapa.jpg" alt="Publicación de prueba con dirección/mapa">
         </div>
-        <div class="caption">Clasificador binario con la mejor relación accuracy/parámetros de los 3 modelos evaluados.</div>
+        <div class="caption" style="font-size: 1.05rem; color: var(--text); margin-top: 0.6rem;">
+          <strong>p(contacto) = 99.9%</strong> &nbsp;→&nbsp; CONTACTO
+          <br><span style="font-size: 0.82rem; color: var(--text-muted);">(umbral 0.67)</span>
+        </div>
 
         <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
         <div class="stat-grid">
@@ -670,11 +676,14 @@
       </div>
 
       <div>
-        <h3>Input → Output</h3>
-        <div class="img-frame contain" style="aspect-ratio: 1.57/1;">
-          <img src="assets/presentation/convnext_example.jpg" alt="ConvNeXT-Tiny: clasificador binario sobre test_001049">
+        <h3>Ejemplo de inferencia</h3>
+        <div class="img-frame contain" style="aspect-ratio: 1/1; max-height: 42vh;">
+          <img src="assets/presentation/prueba_mapa.jpg" alt="Publicación de prueba con dirección/mapa">
         </div>
-        <div class="caption">Arquitectura más reciente, pero termina <strong>siendo la más conservadora</strong>: prioriza precisión a costa de recall.</div>
+        <div class="caption" style="font-size: 1.05rem; color: var(--text); margin-top: 0.6rem;">
+          <strong>p(contacto) = 87.5%</strong> &nbsp;→&nbsp; CONTACTO
+          <br><span style="font-size: 0.82rem; color: var(--text-muted);">(umbral 0.71)</span>
+        </div>
 
         <h3 style="margin-top: 1.5rem;">Resultados (test set)</h3>
         <div class="stat-grid">
@@ -835,7 +844,94 @@
 
 
   <!-- ════════════════════════════════════════════════════════════
-       SLIDE 8 — CIERRE
+       SLIDE 8 — DEMO: PORTAL DE INFERENCIA
+       ════════════════════════════════════════════════════════════ -->
+  <section class="slide">
+    <h2>Portal de inferencia — Demo</h2>
+
+    <div class="two-col" style="margin-top: 1.2rem;">
+      <!-- Columna izquierda: descripción -->
+      <div class="stack">
+        <p>Prototipo funcional que envuelve el modelo ganador <strong>EfficientNet-B0</strong> en una interfaz web simple (Gradio). Pensado como herramienta para un moderador de la plataforma.</p>
+
+        <h3>Cómo funciona</h3>
+        <ol class="steps">
+          <li>El usuario <strong>arrastra una imagen</strong> de una publicación.</li>
+          <li>Se preprocesa (resize 384×384 + normalización ImageNet).</li>
+          <li><strong>EfficientNet-B0</strong> calcula la probabilidad de contacto.</li>
+          <li>Se compara con el umbral (0.67) y se muestra el veredicto.</li>
+        </ol>
+
+        <h3>Salida estructurada</h3>
+        <div class="card" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: #1a1a1a; color: #e0e0e0;">
+          {<br>
+          &nbsp;&nbsp;"image_path": "prueba-mapa.jpg",<br>
+          &nbsp;&nbsp;"prob_contact": 0.999,<br>
+          &nbsp;&nbsp;"pred": 1,<br>
+          &nbsp;&nbsp;"threshold": 0.67<br>
+          }
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Se ejecuta con <code>python inferencia_app.py</code> → abre en <code>localhost:7860</code>.</p>
+      </div>
+
+      <!-- Columna derecha: mock visual del portal -->
+      <div>
+        <!-- Ventana de navegador simulada -->
+        <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);">
+          <!-- Barra del navegador -->
+          <div style="background: #f0f2f5; padding: 0.5rem 0.8rem; display: flex; align-items: center; gap: 0.4rem; border-bottom: 1px solid var(--border);">
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: inline-block;"></span>
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #febc2e; display: inline-block;"></span>
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #28c840; display: inline-block;"></span>
+            <span style="margin-left: 0.6rem; font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">localhost:7860 · Detector de contacto</span>
+          </div>
+          <!-- Cuerpo del portal -->
+          <div style="padding: 1rem; background: white;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center;">
+              <!-- Imagen subida -->
+              <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.3rem;">Imagen de la publicación</div>
+                <img src="assets/presentation/prueba_mapa.jpg" alt="Imagen subida al portal" style="width: 100%; border-radius: 8px; border: 1px solid var(--border);">
+              </div>
+              <!-- Resultado -->
+              <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem;">Probabilidades</div>
+                <!-- Barra con contacto -->
+                <div style="margin-bottom: 0.5rem;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.15rem;">
+                    <span>Con datos de contacto</span><strong>99.9%</strong>
+                  </div>
+                  <div style="height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+                    <div style="height: 100%; width: 99.9%; background: var(--success);"></div>
+                  </div>
+                </div>
+                <!-- Barra sin contacto -->
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.15rem;">
+                    <span>Sin datos de contacto</span><span>0.1%</span>
+                  </div>
+                  <div style="height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+                    <div style="height: 100%; width: 0.1%; background: var(--text-muted);"></div>
+                  </div>
+                </div>
+                <!-- Veredicto -->
+                <div class="card success" style="margin-top: 0.8rem; padding: 0.7rem 0.9rem;">
+                  <strong style="color: var(--success);">🚩 CONTIENE datos de contacto</strong><br>
+                  <span style="font-size: 0.8rem; color: var(--text-soft);">Probabilidad: 99.9% (umbral 67%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">Mock del portal real (Gradio) sobre <code>prueba-mapa.jpg</code>.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       SLIDE 9 — CIERRE
        ════════════════════════════════════════════════════════════ -->
   <section class="slide slide-title">
     <h1 style="font-size: clamp(3rem, 7vw, 5.5rem);">Muchas Gracias</h1>

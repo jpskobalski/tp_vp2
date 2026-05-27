@@ -1,9 +1,0 @@
-{
-  "model_name": "baseline_ocr_regex",
-  "n_images": 3000,
-  "mean_ms": 91.52150670687358,
-  "p50_ms": 42.467594146728516,
-  "p95_ms": 306.63026571273747,
-  "device": "cuda:0",
-  "easyocr_gpu": true
-}
